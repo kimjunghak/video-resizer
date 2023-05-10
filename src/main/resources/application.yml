@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:video
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    database: h2
+  h2:
+    console:
+      enabled: true
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+
+logging:
+  level:
+    com.github.kokorin.jaffree: WARN
+
+server:
+  url: http://localhost:8080/
+  port: 8080
