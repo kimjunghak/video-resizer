@@ -7,8 +7,8 @@ import com.github.kokorin.jaffree.ffprobe.FFprobe;
 import com.github.kokorin.jaffree.ffprobe.FFprobeResult;
 import com.github.kokorin.jaffree.ffprobe.Stream;
 import com.image.resizer.model.entity.FileInfo;
-import com.image.resizer.model.entity.Video;
 import com.image.resizer.model.result.FileInfoResult;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -16,31 +16,25 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
 
-import static com.image.resizer.model.entity.FileInfo.makeFileInfo;
-import static com.image.resizer.utils.Utils.getFilePath;
-import static com.image.resizer.utils.Utils.getResizedFilename;
-
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FFmpegService {
 
     @Value("${server.url}")
     private String serverUrl;
 
-    private final VideoService videoService;
+    @Value("${server.video-path}")
+    private String videoPath;
+
     private final FileInfoService fileInfoService;
 
-    public FFmpegService(VideoService videoService, FileInfoService fileInfoService) {
-        this.videoService = videoService;
-        this.fileInfoService = fileInfoService;
-    }
-
     @Async("taskExecutor")
-    public void resize(String title, String originalFilename) {
-        String filePath = getFilePath(originalFilename);
+    public void resize(String originalFilename, FileInfo fileInfo) {
+        String filePath = videoPath.concat(originalFilename);
 
         String resizedFilename = getResizedFilename(originalFilename);
-        String outputPath = getFilePath(resizedFilename);
+        String outputPath = videoPath.concat(resizedFilename);
 
         FFmpeg.atPath()
                 .addInput(UrlInput.fromUrl(filePath))
@@ -49,19 +43,12 @@ public class FFmpegService {
                 .setOverwriteOutput(true)
                 .execute();
 
-        FileInfoResult originalFileInfo = extractFileInfo(filePath, originalFilename);
         FileInfoResult resizedFileInfo = extractFileInfo(outputPath, resizedFilename);
-        FileInfo fileInfo = makeFileInfo(originalFileInfo, resizedFileInfo);
+        fileInfo.mergeResized(resizedFileInfo);
         fileInfoService.save(fileInfo);
-
-        Video video = Video.builder()
-                .title(title)
-                .fileInfo(fileInfo)
-                .build();
-        videoService.save(video);
     }
 
-    public FileInfoResult extractFileInfo(String filePath, String title) {
+    public FileInfoResult extractFileInfo(String filePath, String filename) {
         FFprobeResult result = FFprobe.atPath()
                 .setShowStreams(true)
                 .setShowFormat(true)
@@ -83,6 +70,10 @@ public class FFmpegService {
 
         Long fileSize = result.getFormat().getSize();
 
-        return new FileInfoResult(fileSize, width, height, serverUrl.concat(title));
+        return new FileInfoResult(fileSize, width, height, serverUrl.concat("/stream/video/").concat(filename));
+    }
+
+    private static String getResizedFilename(String filename) {
+        return filename.replace(".mp4", "_resize.mp4");
     }
 }

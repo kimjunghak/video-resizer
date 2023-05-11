@@ -6,26 +6,30 @@ import com.image.resizer.model.entity.Video;
 import com.image.resizer.model.result.FileInfoResult;
 import com.image.resizer.model.result.VideoResult;
 import com.image.resizer.service.FFmpegService;
+import com.image.resizer.service.FileInfoService;
 import com.image.resizer.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 
-import static com.image.resizer.utils.Utils.getFilePath;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class VideoApiService {
 
+    @Value("${server.video-path}")
+    private String videoPath;
+
     private final FFmpegService ffmpegService;
     private final VideoService videoService;
+    private final FileInfoService fileInfoService;
 
     public void videoResize(MultipartFile file, String filename) {
         String originalFilename = file.getOriginalFilename();
@@ -35,22 +39,34 @@ public class VideoApiService {
         }
 
         String title = Strings.isEmpty(filename) ? originalFilename : filename;
+        String filePath = videoPath.concat(originalFilename);
 
         try {
-            file.transferTo(new File(getFilePath(originalFilename)));
+            file.transferTo(new File(filePath));
         } catch (IOException e) {
             throw new RuntimeException("파일 저장에 실패하였습니다.");
         }
-        // 파일 리사이징
-        ffmpegService.resize(title, originalFilename);
+
+        FileInfoResult originalFileInfo = ffmpegService.extractFileInfo(filePath, originalFilename);
+        FileInfo original = FileInfo.toOriginal(originalFileInfo);
+        fileInfoService.save(original);
+
+        Video video = Video.builder()
+                .title(title)
+                .fileInfo(original)
+                .build();
+        videoService.save(video);
+
+        // 파일 리사이징 async
+        ffmpegService.resize(originalFilename, original);
     }
 
     public VideoResult getVideo(Long id) {
         Video video = videoService.getVideo(id);
 
         FileInfo fileInfo = video.getFileInfo();
-        FileInfoResult originalFileInfo = new FileInfoResult(fileInfo.getOriginalFileSize(), fileInfo.getOriginalWidth(), fileInfo.getOriginalHeight(), fileInfo.getOriginalVideoUrl());
-        FileInfoResult resizedFileInfo = new FileInfoResult(fileInfo.getResizedFileSize(), fileInfo.getResizedWidth(), fileInfo.getResizedHeight(), fileInfo.getResizedVideoUrl());
+        FileInfoResult originalFileInfo = FileInfoResult.toOriginalResult(fileInfo);
+        FileInfoResult resizedFileInfo = FileInfoResult.toResizedResult(fileInfo);
 
         return VideoResult.builder()
                 .id(video.getId())

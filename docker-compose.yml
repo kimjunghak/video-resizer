@@ -13,4 +13,4 @@ services:
       - ./lib:/srv/video-resizer/lib
       - ./conf:/srv/video-resizer/conf
       - ./video:/srv/video-resizer/video
-    command: "java -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8 -jar /srv/video-resizer/lib/resizer-0.0.1-SNAPSHOT.jar --spring.config.location=file:/srv/video-resizer/conf/application.yml"
+    command: bash -c "apt-get install -y ffmpeg; java -Djava.net.preferIPv4Stack=true -Dfile.encoding=utf-8 -jar /srv/video-resizer/lib/resizer-0.0.1-SNAPSHOT.jar --spring.config.location=file:/srv/video-resizer/conf/application.yml"

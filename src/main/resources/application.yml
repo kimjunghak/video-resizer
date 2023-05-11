@@ -20,5 +20,6 @@ logging:
     com.github.kokorin.jaffree: WARN
 
 server:
-  url: http://localhost:8080/
+  url: http://localhost:8080
+  video-path: /path/to/save/file
   port: 8080

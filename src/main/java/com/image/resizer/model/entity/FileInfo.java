@@ -2,12 +2,9 @@ package com.image.resizer.model.entity;
 
 import com.image.resizer.model.result.FileInfoResult;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Getter
+@Getter @Setter(AccessLevel.PRIVATE)
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 @Entity @Table
@@ -33,16 +30,19 @@ public class FileInfo {
 
     private String resizedVideoUrl;
 
-    public static FileInfo makeFileInfo(FileInfoResult originalFileInfo, FileInfoResult resizedFileInfo) {
+    public static FileInfo toOriginal(FileInfoResult original) {
         return FileInfo.builder()
-                .originalFileSize(originalFileInfo.getFileSize())
-                .originalWidth(originalFileInfo.getWidth())
-                .originalHeight(originalFileInfo.getHeight())
-                .originalVideoUrl(originalFileInfo.getVideoUrl())
-                .resizedFileSize(resizedFileInfo.getFileSize())
-                .resizedWidth(resizedFileInfo.getWidth())
-                .resizedHeight(resizedFileInfo.getHeight())
-                .resizedVideoUrl(resizedFileInfo.getVideoUrl())
+                .originalFileSize(original.getFileSize())
+                .originalWidth(original.getWidth())
+                .originalHeight(original.getHeight())
+                .originalVideoUrl(original.getVideoUrl())
                 .build();
+    }
+
+    public void mergeResized(FileInfoResult resized) {
+        this.resizedFileSize = resized.getFileSize();
+        this.resizedWidth = resized.getWidth();
+        this.resizedHeight = resized.getHeight();
+        this.resizedVideoUrl = resized.getVideoUrl();
     }
 }
