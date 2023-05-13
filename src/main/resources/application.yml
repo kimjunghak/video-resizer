@@ -21,5 +21,8 @@ logging:
 
 server:
   url: http://localhost:8080
-  video-path: /path/to/save/file
   port: 8080
+
+path:
+  video: /Users/kimjh/IdeaProjects/resizer/video/
+  thumbnail: /Users/kimjh/IdeaProjects/resizer/thumbnail/

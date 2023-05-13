@@ -16,6 +16,8 @@ public class VideoResult {
 
     private String title;
 
+    private String thumbnailUrl;
+
     private FileInfoResult original;
 
     private FileInfoResult resized;

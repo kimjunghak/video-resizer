@@ -1,4 +1,4 @@
-package com.image.resizer.service;
+package com.image.resizer.service.back;
 
 import com.image.resizer.model.entity.Video;
 import com.image.resizer.repository.VideoRepository;

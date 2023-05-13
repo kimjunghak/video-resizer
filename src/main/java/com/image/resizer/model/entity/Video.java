@@ -22,4 +22,6 @@ public class Video extends BaseEntity{
     @JoinColumn(name = "videoId")
     private FileInfo fileInfo;
 
+    private String thumbnailUrl;
+
 }
